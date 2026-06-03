@@ -1,8 +1,8 @@
-// Servidor HTTP (modo remoto): expone el MCP por Streamable HTTP detrás de OAuth.
+// HTTP server (remote mode): exposes the MCP over Streamable HTTP behind OAuth.
 //
-// El endpoint MCP vive en la RAÍZ ("/"): Claude (remote connector) envía tanto el
-// flujo OAuth como el protocolo MCP desde la raíz del dominio. Los metadatos OAuth
-// y /authorge /token /register los monta mcpAuthRouter en sus rutas propias.
+// The MCP endpoint lives at the ROOT ("/"): Claude (remote connector) sends both
+// the OAuth flow and the MCP protocol from the domain root. mcpAuthRouter mounts
+// the OAuth metadata and /authorize /token /register on their own paths.
 
 import express from 'express';
 import cors from 'cors';
@@ -14,15 +14,15 @@ import { requireBearerAuth } from '@modelcontextprotocol/sdk/server/auth/middlew
 import { GoogleOAuthProvider } from './auth/google-oauth-provider.js';
 import { registerTools } from '../index.js';
 
-// Página mínima para el caso "tu cuenta no está autorizada".
+// Minimal page for the "your account is not authorized" case.
 function forbiddenPage(email) {
   const who = email ? ` (${email})` : '';
-  return `<!doctype html><html lang="es"><meta charset="utf-8">
-<title>Acceso denegado</title>
+  return `<!doctype html><html lang="en"><meta charset="utf-8">
+<title>Access denied</title>
 <body style="font-family:system-ui;max-width:32rem;margin:4rem auto;line-height:1.5">
-<h1>Acceso denegado</h1>
-<p>Tu cuenta de Google${who} no está en la lista de usuarios autorizados de este servidor MCP.</p>
-<p>Pedí al administrador que agregue tu email a <code>B24_ALLOWED_EMAILS</code>.</p>
+<h1>Access denied</h1>
+<p>Your Google account${who} is not on the allowlist of this MCP server.</p>
+<p>Ask the administrator to add your email to <code>B24_ALLOWED_EMAILS</code>.</p>
 </body></html>`;
 }
 
@@ -39,13 +39,13 @@ export async function startHttpServer(config) {
       allowedHeaders: ['Content-Type', 'Authorization', 'Mcp-Session-Id', 'Mcp-Protocol-Version'],
     })
   );
-  // Límite alto: tools como b24_apply_config envían JSON de configuración grandes.
+  // High limit: tools like b24_apply_config send large configuration JSON.
   app.use(express.json({ limit: '10mb' }));
 
-  // Healthcheck público (sin auth): lo usa el healthcheck de Docker.
+  // Public healthcheck (no auth): used by the Docker healthcheck.
   app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 
-  // Endpoints OAuth como Authorization Server frente a Claude:
+  // OAuth endpoints acting as an Authorization Server towards Claude:
   // /.well-known/*, /authorize, /token, /register.
   app.use(
     mcpAuthRouter({
@@ -58,7 +58,7 @@ export async function startHttpServer(config) {
     })
   );
 
-  // Vuelta desde Google: validamos el email y reenviamos a Claude (o 403).
+  // Return from Google: validate the email and forward to Claude (or 403).
   app.get('/auth/callback', async (req, res) => {
     try {
       const result = await provider.handleGoogleCallback(req.query);
@@ -67,12 +67,12 @@ export async function startHttpServer(config) {
       }
       return res.redirect(result.redirectUrl);
     } catch (err) {
-      return res.status(400).type('html').send(`<h1>Error de autenticación</h1><p>${err.message}</p>`);
+      return res.status(400).type('html').send(`<h1>Authentication error</h1><p>${err.message}</p>`);
     }
   });
 
-  // Endpoint MCP en la raíz, protegido por Bearer. Patrón stateless: un McpServer
-  // y un transport nuevos por request, que se cierran al terminar la respuesta.
+  // MCP endpoint at the root, protected by Bearer. Stateless pattern: a fresh
+  // McpServer and transport per request, closed when the response ends.
   const bearer = requireBearerAuth({ verifier: provider, resourceMetadataUrl });
 
   app.post('/', bearer, async (req, res) => {
@@ -97,7 +97,7 @@ export async function startHttpServer(config) {
     }
   });
 
-  // En modo stateless no hay stream SSE servidor→cliente ni sesión que borrar.
+  // In stateless mode there is no server→client SSE stream nor session to delete.
   const methodNotAllowed = (_req, res) =>
     res.status(405).json({
       jsonrpc: '2.0',
@@ -111,7 +111,7 @@ export async function startHttpServer(config) {
     app.listen(config.port, config.host, resolve);
   });
   process.stderr.write(
-    `[bitrix24] HTTP MCP escuchando en ${config.host}:${config.port} | OAuth Google | ` +
-      `${provider.allowed.size} email(s) en lista blanca\n`
+    `[bitrix24] HTTP MCP listening on ${config.host}:${config.port} | Google OAuth | ` +
+      `${provider.allowed.size} email(s) in allowlist\n`
   );
 }

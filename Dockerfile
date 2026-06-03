@@ -2,20 +2,20 @@ FROM node:20-slim
 
 WORKDIR /app
 
-# Dependencias primero (mejor cache). Sin devDependencies en producción.
+# Dependencies first (better cache). No devDependencies in production.
 COPY package.json package-lock.json* ./
 RUN npm install --omit=dev --no-audit --no-fund
 
-# Código de la aplicación.
+# Application code.
 COPY index.js ./
 COPY src ./src
 
-# El proceso corre como usuario no privilegiado.
+# The process runs as a non-privileged user.
 RUN useradd --create-home --uid 10001 appuser
 USER appuser
 
-# En el contenedor escuchamos en todas las interfaces; hacia afuera NO se publica:
-# -p 127.0.0.1:8001:8001 limita el acceso solo al nginx local.
+# Inside the container we listen on all interfaces; it is NOT published outward:
+# -p 127.0.0.1:8001:8001 limits access to the local nginx only.
 ENV B24_TRANSPORT=http \
     B24_HOST=0.0.0.0 \
     B24_PORT=8001

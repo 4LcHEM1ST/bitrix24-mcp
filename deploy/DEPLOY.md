@@ -1,30 +1,30 @@
-# Despliegue en VPS (Docker Compose + nginx existente)
+# VPS deployment (Docker Compose + existing nginx)
 
-Esquema: cada servidor MCP corre en Docker en su puerto local (`127.0.0.1:800X`),
-y el nginx existente proxya hacia él un **subdominio** por HTTPS. No hace falta
-Caddy — el TLS lo hace nginx (certbot).
+Layout: each MCP server runs in Docker on its own local port (`127.0.0.1:800X`),
+and the existing nginx proxies a **subdomain** to it over HTTPS. No Caddy needed —
+nginx does the TLS (certbot).
 
-Este servidor: subdominio `btrx-mcp.texpertiza.ru`, puerto `8001`.
-(El vecino `kontur-mcp.texpertiza.ru` ya usa el `8000`.)
+This server: subdomain `btrx-mcp.texpertiza.ru`, port `8001`.
+(The neighbor `kontur-mcp.texpertiza.ru` already uses `8000`.)
 
 ## 0. DNS
 
-Registro A `btrx-mcp.texpertiza.ru` → IP del VPS.
+A record `btrx-mcp.texpertiza.ru` → VPS IP.
 
-## 1. Código al servidor
+## 1. Code on the server
 
 ```bash
-git clone <repo> /opt/bitrix24-mcp   # o copiá la carpeta del proyecto
+git clone <repo> /opt/bitrix24-mcp   # or copy the project folder
 cd /opt/bitrix24-mcp
 ```
 
-## 2. .env en el servidor
+## 2. .env on the server
 
-Creá `/opt/bitrix24-mcp/.env`:
+Create `/opt/bitrix24-mcp/.env`:
 
 ```
-# Webhook entrante de Bitrix24 (credencial COMPARTIDA por todos los usuarios autorizados).
-B24_DEFAULT_WEBHOOK=https://tu-portal.bitrix24.com/rest/1/tu-token/
+# Bitrix24 incoming webhook (credential SHARED by all authorized users).
+B24_DEFAULT_WEBHOOK=https://your-portal.bitrix24.com/rest/1/your-token/
 
 B24_TRANSPORT=http
 B24_HOST=0.0.0.0
@@ -35,27 +35,27 @@ B24_GOOGLE_CLIENT_SECRET=GOCSPX-<...>
 B24_ALLOWED_EMAILS=manager.ges.07@gmail.com
 ```
 
-> `B24_PUBLIC_URL` sin barra final. El redirect URI en Google debe ser
-> exactamente `https://btrx-mcp.texpertiza.ru/auth/callback`.
+> `B24_PUBLIC_URL` with no trailing slash. The redirect URI in Google must be
+> exactly `https://btrx-mcp.texpertiza.ru/auth/callback`.
 >
-> ⚠️ Todos los emails de `B24_ALLOWED_EMAILS` comparten el MISMO webhook de
-> Bitrix24 y pueden ejecutar cualquier método REST (incluido `b24_call`). La lista
-> blanca es la única barrera de quién puede usar ese webhook — mantenela corta.
+> ⚠️ Every email in `B24_ALLOWED_EMAILS` shares the SAME Bitrix24 webhook and can
+> run any REST method (including `b24_call`). The allowlist is the only barrier of
+> who may use that webhook — keep it short.
 
-## 3. Build y arranque
+## 3. Build and run
 
 ```bash
 docker compose up -d --build
-docker compose logs -f bitrix24-mcp    # esperá "HTTP MCP escuchando en 0.0.0.0:8001"
-docker compose ps                      # STATUS debe pasar a (healthy) en ~10-40s
+docker compose logs -f bitrix24-mcp    # wait for "HTTP MCP listening on 0.0.0.0:8001"
+docker compose ps                      # STATUS should become (healthy) in ~10-40s
 curl -s http://127.0.0.1:8001/health   # {"status":"ok"}
 ```
 
-`/health` es público (sin OAuth) para chequear que el server vive; lo usa el
-healthcheck de `docker-compose.yml`. El protocolo MCP se sirve en la RAÍZ (`/`),
-por eso la URL del conector va **sin `/mcp`** (ver paso 6).
+`/health` is public (no OAuth) to check the server is alive; the healthcheck in
+`docker-compose.yml` uses it too. The MCP protocol is served at the ROOT (`/`),
+so the connector URL has **no `/mcp`** (see step 6).
 
-El puerto está atado a `127.0.0.1` — no se publica hacia afuera, solo accede nginx.
+The port is bound to `127.0.0.1` — not published outward, only nginx reaches it.
 
 ## 4. nginx + TLS
 
@@ -68,58 +68,58 @@ sudo certbot --nginx -d btrx-mcp.texpertiza.ru
 
 ## 5. Google OAuth
 
-Se reutiliza el MISMO proyecto/cliente OAuth que `kontur-mcp` — no hace falta
-crear una app nueva. En Google Cloud Console, en ese cliente OAuth:
+The SAME Google OAuth project/client as `kontur-mcp` is reused — no need to create
+a new app. In Google Cloud Console, on that OAuth client:
 
-- Authorized redirect URIs: **agregar** `https://btrx-mcp.texpertiza.ru/auth/callback`
-  (junto al de kontur, sin borrarlo).
-- Consent screen: External, modo Testing, con los emails en Test users.
+- Authorized redirect URIs: **add** `https://btrx-mcp.texpertiza.ru/auth/callback`
+  (alongside the kontur one, without removing it).
+- Consent screen: External, Testing mode, with the emails in Test users.
 
-## 6. Conexión en Claude
+## 6. Connect in Claude
 
 Claude → **Settings → Connectors** → Add custom connector →
-URL `https://btrx-mcp.texpertiza.ru` (raíz del dominio, **sin `/mcp`**).
-Completá el login con Google. Un email fuera de `B24_ALLOWED_EMAILS` recibe 403.
+URL `https://btrx-mcp.texpertiza.ru` (domain root, **no `/mcp`**).
+Complete the Google login. An email outside `B24_ALLOWED_EMAILS` gets a 403.
 
 ---
 
-## Varios MCP en un mismo VPS
+## Several MCP servers on one VPS
 
-Modelo: **subdominio + puerto local por servidor** (no rutas en un mismo dominio —
-si no, los `/.well-known/*` y `/auth/callback` del OAuth chocarían en la raíz).
+Model: **subdomain + local port per server** (not paths on a single domain —
+otherwise the OAuth `/.well-known/*` and `/auth/callback` would collide at the root).
 
-Para sumar otro servidor MCP:
-1. **Puerto:** asignale el suyo (`127.0.0.1:8002`, …).
-2. **DNS:** registro A del nuevo subdominio → IP del VPS.
-3. **nginx:** copiá `nginx-mcp.conf`, cambiá `server_name` y `proxy_pass` (puerto),
-   luego `certbot --nginx -d <nuevo-subdominio>`.
-4. **OAuth:** en la misma app de Google agregá otro redirect URI
-   `https://<nuevo-subdominio>/auth/callback` — no hace falta app aparte.
-5. **Claude:** agregá el conector `https://<nuevo-subdominio>`.
+To add another MCP server:
+1. **Port:** give it its own (`127.0.0.1:8002`, …).
+2. **DNS:** A record for the new subdomain → VPS IP.
+3. **nginx:** copy `nginx-mcp.conf`, change `server_name` and `proxy_pass` (port),
+   then `certbot --nginx -d <new-subdomain>`.
+4. **OAuth:** in the same Google app add another redirect URI
+   `https://<new-subdomain>/auth/callback` — no separate app needed.
+5. **Claude:** add the connector `https://<new-subdomain>`.
 
-## Seguridad
+## Security
 
-**Permisos del `.env`** (tiene el webhook de Bitrix y el secret de Google):
+**`.env` permissions** (it holds the Bitrix webhook and the Google secret):
 ```bash
 chmod 600 /opt/bitrix24-mcp/.env
 ```
-`.env` no se commitea (está en `.gitignore`) y no se hornea en la imagen — se pasa
-en runtime vía `env_file`. El proceso corre como usuario no privilegiado `appuser`.
+`.env` is not committed (it's in `.gitignore`) and not baked into the image — it's
+passed at runtime via `env_file`. The process runs as the non-privileged `appuser`.
 
-**Firewall (ufw):** hacia afuera solo SSH y web; los puertos de los contenedores
-(8000+) quedan cerrados — además solo escuchan en `127.0.0.1`.
+**Firewall (ufw):** outward only SSH and web; the container ports (8000+) stay
+closed — and they only listen on `127.0.0.1` anyway.
 
-## Actualización de versión
+## Updating a version
 
 ```bash
 cd /opt/bitrix24-mcp && git pull
 docker compose up -d --build
 ```
 
-## Diagnóstico
+## Troubleshooting
 
-- `docker compose logs -f bitrix24-mcp` — logs del servidor.
-- 502 de nginx → el contenedor no arrancó/cayó (`docker compose ps`).
-- OAuth no pasa → coincidencia exacta del redirect URI y email en `B24_ALLOWED_EMAILS`.
-- Tras reiniciar el contenedor, los tokens (in-memory) se invalidan: hay que
-  reconectar/reloguear en Claude. Es esperado.
+- `docker compose logs -f bitrix24-mcp` — server logs.
+- nginx 502 → the container didn't start / crashed (`docker compose ps`).
+- OAuth doesn't pass → exact redirect URI match and email in `B24_ALLOWED_EMAILS`.
+- After a container restart the (in-memory) tokens are invalidated: you must
+  reconnect / re-login in Claude. This is expected.

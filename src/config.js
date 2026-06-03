@@ -1,8 +1,8 @@
-// Configuración del servidor: carga y validación de variables de entorno.
+// Server configuration: loads and validates environment variables.
 //
-// Dos transportes (B24_TRANSPORT):
-//   - stdio (por defecto) — ejecución local junto a Claude Desktop, sin auth;
-//   - http — servidor remoto con OAuth (Google) y lista blanca de emails.
+// Two transports (B24_TRANSPORT):
+//   - stdio (default) — local run next to Claude Desktop, no auth;
+//   - http — remote server with Google OAuth and an email allowlist.
 
 function parseEmails(raw) {
   return (raw || '')
@@ -25,7 +25,7 @@ export function loadConfig() {
     transport,
     host: (process.env.B24_HOST || '127.0.0.1').trim() || '127.0.0.1',
     port: envInt('B24_PORT', 8001),
-    // Sin barra final: el redirect URI se construye como `${publicUrl}/auth/callback`.
+    // No trailing slash: the redirect URI is built as `${publicUrl}/auth/callback`.
     publicUrl: (process.env.B24_PUBLIC_URL || '').trim().replace(/\/+$/, ''),
     googleClientId: (process.env.B24_GOOGLE_CLIENT_ID || '').trim(),
     googleClientSecret: (process.env.B24_GOOGLE_CLIENT_SECRET || '').trim(),
@@ -39,15 +39,15 @@ export function loadConfig() {
     if (!config.googleClientId) missing.push('B24_GOOGLE_CLIENT_ID');
     if (!config.googleClientSecret) missing.push('B24_GOOGLE_CLIENT_SECRET');
     if (missing.length) {
-      throw new Error(`Para B24_TRANSPORT=http faltan variables: ${missing.join(', ')}`);
+      throw new Error(`B24_TRANSPORT=http requires these variables: ${missing.join(', ')}`);
     }
-    // OAuth garantiza que el usuario entró por Google, pero NO limita quién. La lista
-    // blanca es la única barrera de acceso; sin ella el servidor dejaría entrar a
-    // cualquier usuario de Google. Por eso en modo http es obligatoria.
+    // OAuth proves the user signed in with Google, but does NOT restrict WHO. The
+    // allowlist is the only access barrier; without it the server would let in any
+    // Google user. That's why it is mandatory in http mode.
     if (config.allowedEmails.length === 0) {
       throw new Error(
-        'B24_ALLOWED_EMAILS está vacío: en modo http la lista blanca de emails es ' +
-          'obligatoria, de lo contrario el servidor dejaría entrar a cualquier usuario de Google.'
+        'B24_ALLOWED_EMAILS is empty: in http mode the email allowlist is mandatory, ' +
+          'otherwise the server would let in any Google user.'
       );
     }
   }

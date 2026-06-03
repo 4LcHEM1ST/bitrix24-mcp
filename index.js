@@ -88,8 +88,8 @@ function wrap(fn) {
   };
 }
 
-// Registra TODOS los tools en un McpServer. Reutilizado por el transporte stdio
-// (un servidor de por vida) y por el http (un servidor nuevo por request).
+// Registers ALL tools on an McpServer. Reused by the stdio transport (a single
+// long-lived server) and by the http transport (a fresh server per request).
 export function registerTools(server) {
 // ── Universales ───────────────────────────────────────────────────────────────
 server.tool('b24_call',
@@ -285,7 +285,7 @@ server.tool('b24_products_sections',
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Transporte local (Claude Desktop): un servidor de por vida sobre stdio.
+// Local transport (Claude Desktop): a single long-lived server over stdio.
 async function runStdio() {
   const server = new McpServer({ name: 'bitrix24-config', version: '2.0.0' });
   registerTools(server);
@@ -308,7 +308,7 @@ async function runStdio() {
 
 const config = loadConfig();
 if (config.transport === 'http') {
-  // Carga diferida: evita la dependencia circular index ↔ http-server al usar stdio.
+  // Lazy import: avoids the index ↔ http-server circular dependency in stdio mode.
   const { startHttpServer } = await import('./src/http-server.js');
   await startHttpServer(config);
 } else {
