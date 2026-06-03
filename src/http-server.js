@@ -12,7 +12,6 @@ import { mcpAuthRouter } from '@modelcontextprotocol/sdk/server/auth/router.js';
 import { requireBearerAuth } from '@modelcontextprotocol/sdk/server/auth/middleware/bearerAuth.js';
 
 import { GoogleOAuthProvider } from './auth/google-oauth-provider.js';
-import { registerTools } from '../index.js';
 
 // Minimal page for the "your account is not authorized" case.
 function forbiddenPage(email) {
@@ -26,7 +25,10 @@ function forbiddenPage(email) {
 </body></html>`;
 }
 
-export async function startHttpServer(config) {
+// `registerTools` is passed in (not imported) to avoid an index ↔ http-server
+// import cycle: index.js is a top-level-await module, and a static import back
+// into it would deadlock the async module graph.
+export async function startHttpServer(config, registerTools) {
   const provider = new GoogleOAuthProvider(config);
   const baseUrl = new URL(config.publicUrl);
   const resourceMetadataUrl = new URL('/.well-known/oauth-protected-resource', baseUrl).href;

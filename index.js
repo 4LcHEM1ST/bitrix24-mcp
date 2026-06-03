@@ -308,9 +308,11 @@ async function runStdio() {
 
 const config = loadConfig();
 if (config.transport === 'http') {
-  // Lazy import: avoids the index ↔ http-server circular dependency in stdio mode.
+  // Lazy import: http-server pulls in express/oauth deps only in http mode.
+  // registerTools is passed in (not imported by http-server) to keep that module
+  // free of any dependency back on index.js.
   const { startHttpServer } = await import('./src/http-server.js');
-  await startHttpServer(config);
+  await startHttpServer(config, registerTools);
 } else {
   await runStdio();
 }
