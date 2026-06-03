@@ -108,6 +108,24 @@ After saving the config file, restart Claude Desktop. You should see the Bitrix2
 
 ---
 
+## Remote server (HTTP + Google OAuth)
+
+The steps above run the server locally over **stdio**. You can also run it as a
+**remote MCP server** behind HTTPS and connect it from Claude as a *custom
+connector*, gated by **Google OAuth + an email allowlist**.
+
+In this mode the server acts as an OAuth Authorization Server for Claude and uses
+Google to authenticate the real user; only emails listed in `B24_ALLOWED_EMAILS`
+are admitted. All admitted users share the server-side `B24_DEFAULT_WEBHOOK`.
+
+Set `B24_TRANSPORT=http` plus `B24_PUBLIC_URL`, `B24_GOOGLE_CLIENT_ID`,
+`B24_GOOGLE_CLIENT_SECRET` and `B24_ALLOWED_EMAILS` (see `.env.example`). The
+target deployment is Docker + nginx on a VPS, one subdomain per MCP server.
+
+➡️ Full instructions: [`deploy/DEPLOY.md`](deploy/DEPLOY.md).
+
+---
+
 ## Access Profiles
 
 Bitrix24 webhooks use **scopes** to control which modules are accessible. Each scope unlocks a set of API methods — but within a scope, all operations (read and write) are permitted. There is no built-in "read-only" flag at the scope level.

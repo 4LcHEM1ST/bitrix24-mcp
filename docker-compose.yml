@@ -1,0 +1,21 @@
+# MCP en un VPS. Cada servidor MCP usa su propio puerto local (no se publica
+# hacia afuera); el acceso externo va solo por nginx en su subdominio.
+#
+# Arranque: docker compose up -d --build
+# Logs:     docker compose logs -f bitrix24-mcp
+
+services:
+  bitrix24-mcp:
+    build: .
+    container_name: bitrix24-mcp
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "127.0.0.1:8001:8001"   # solo localhost -> nginx
+    healthcheck:
+      # node 20 trae fetch global; 200 en /health -> healthy
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8001/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

@@ -1,5 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { loadConfig } from './src/config.js';
 
 // ── Universales ───────────────────────────────────────────────────────────────
 import { callSchema, universalCall, batchSchema, universalBatch } from './src/tools/universal-call.js';
@@ -73,8 +74,6 @@ import {
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-const server = new McpServer({ name: 'bitrix24-config', version: '2.0.0' });
-
 function wrap(fn) {
   return async (params) => {
     try {
@@ -89,6 +88,9 @@ function wrap(fn) {
   };
 }
 
+// Registra TODOS los tools en un McpServer. Reutilizado por el transporte stdio
+// (un servidor de por vida) y por el http (un servidor nuevo por request).
+export function registerTools(server) {
 // ── Universales ───────────────────────────────────────────────────────────────
 server.tool('b24_call',
   'Llama CUALQUIER método REST de la API de Bitrix24. Úsalo cuando no exista un tool específico. ' +
@@ -279,21 +281,36 @@ server.tool('b24_products_update',
 server.tool('b24_products_sections',
   'Lista las secciones/categorías del catálogo de productos.',
   productsSectionsSchema.shape, wrap(productsSections));
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-const transport = new StdioServerTransport();
-await server.connect(transport);
+// Transporte local (Claude Desktop): un servidor de por vida sobre stdio.
+async function runStdio() {
+  const server = new McpServer({ name: 'bitrix24-config', version: '2.0.0' });
+  registerTools(server);
+  const transport = new StdioServerTransport();
+  await server.connect(transport);
 
-// Auto-test de conexión al arrancar
-if (process.env.B24_DEFAULT_WEBHOOK) {
-  try {
-    const { Bitrix24Client } = await import('./src/bitrix24/client.js');
-    const client = new Bitrix24Client(process.env.B24_DEFAULT_WEBHOOK);
-    const res = await client.call('profile');
-    const name = `${res.result?.NAME || ''} ${res.result?.LAST_NAME || ''}`.trim();
-    process.stderr.write(`[bitrix24] ✓ Conectado a ${client.portal} como ${name} | ${Object.keys(server._registeredTools ?? {}).length || 40} tools activos\n`);
-  } catch (err) {
-    process.stderr.write(`[bitrix24] ✗ No se pudo conectar: ${err.message}\n`);
+  // Auto-test de conexión al arrancar
+  if (process.env.B24_DEFAULT_WEBHOOK) {
+    try {
+      const { Bitrix24Client } = await import('./src/bitrix24/client.js');
+      const client = new Bitrix24Client(process.env.B24_DEFAULT_WEBHOOK);
+      const res = await client.call('profile');
+      const name = `${res.result?.NAME || ''} ${res.result?.LAST_NAME || ''}`.trim();
+      process.stderr.write(`[bitrix24] ✓ Conectado a ${client.portal} como ${name} | ${Object.keys(server._registeredTools ?? {}).length || 40} tools activos\n`);
+    } catch (err) {
+      process.stderr.write(`[bitrix24] ✗ No se pudo conectar: ${err.message}\n`);
+    }
   }
+}
+
+const config = loadConfig();
+if (config.transport === 'http') {
+  // Carga diferida: evita la dependencia circular index ↔ http-server al usar stdio.
+  const { startHttpServer } = await import('./src/http-server.js');
+  await startHttpServer(config);
+} else {
+  await runStdio();
 }
