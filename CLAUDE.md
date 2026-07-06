@@ -99,3 +99,6 @@ server.tool('b24_xxx', 'Описание для модели', xxxSchema.shape, 
   импортируется из index.js — иначе статический импорт обратно в модуль с top-level await
   создаёт дедлок графа модулей (см. коммит про «http mode startup deadlock»).
 - В `http`-режиме allowlist email обязателен — без него в конфиге бросается ошибка.
+- OAuth-хранилище (клиенты DCR + access/refresh токены) персистится в файл
+  `B24_OAUTH_STORE_PATH` (в Docker — `/data/oauth-state.json` на томе `oauth-data`),
+  поэтому токены переживают рестарт. Если путь пуст — работает как раньше, в памяти.

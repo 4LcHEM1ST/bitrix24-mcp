@@ -12,6 +12,10 @@ services:
     env_file: .env
     ports:
       - "127.0.0.1:8001:8001"   # localhost only -> nginx
+    volumes:
+      # Persists the OAuth store (clients + tokens) across restarts so users
+      # don't have to re-login every deploy. See B24_OAUTH_STORE_PATH.
+      - oauth-data:/data
     healthcheck:
       # node 20 ships global fetch; 200 on /health -> healthy
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8001/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
@@ -19,3 +23,6 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
+
+volumes:
+  oauth-data:

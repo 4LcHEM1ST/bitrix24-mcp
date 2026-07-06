@@ -109,6 +109,13 @@ passed at runtime via `env_file`. The process runs as the non-privileged `appuse
 **Firewall (ufw):** outward only SSH and web; the container ports (8000+) stay
 closed — and they only listen on `127.0.0.1` anyway.
 
+**OAuth store (`oauth-data` volume):** the provider persists registered clients
+and access/refresh tokens to `/data/oauth-state.json` (path from
+`B24_OAUTH_STORE_PATH`, set in the Dockerfile) so they survive a restart. The
+file is written `0600` and lives in a Docker named volume owned by `appuser`
+(uid 10001). It holds bearer tokens — treat it like a credential. To force all
+users to re-login, remove the volume: `docker compose down && docker volume rm bitrix24-mcp_oauth-data`.
+
 ## Updating a version
 
 ```bash
@@ -121,5 +128,7 @@ docker compose up -d --build
 - `docker compose logs -f bitrix24-mcp` — server logs.
 - nginx 502 → the container didn't start / crashed (`docker compose ps`).
 - OAuth doesn't pass → exact redirect URI match and email in `B24_ALLOWED_EMAILS`.
-- After a container restart the (in-memory) tokens are invalidated: you must
-  reconnect / re-login in Claude. This is expected.
+- OAuth clients and tokens persist in the `oauth-data` volume
+  (`/data/oauth-state.json`), so a normal restart / redeploy keeps users logged
+  in. A re-login is only needed if that volume is removed
+  (`docker compose down -v`) or the store file is deleted.

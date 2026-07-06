@@ -15,6 +15,7 @@
 // re-registers automatically).
 
 import { randomUUID } from 'node:crypto';
+import { existsSync, readFileSync, writeFileSync, renameSync } from 'node:fs';
 import axios from 'axios';
 
 const GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
@@ -43,8 +44,9 @@ function decodeJwtPayload(jwt) {
 }
 
 class InMemoryClientsStore {
-  constructor() {
+  constructor(onChange) {
     this.clients = new Map();
+    this._onChange = onChange || (() => {});
   }
 
   getClient(clientId) {
@@ -61,6 +63,7 @@ class InMemoryClientsStore {
       client_id_issued_at: now(),
     };
     this.clients.set(clientId, full);
+    this._onChange();
     return full;
   }
 }
@@ -71,12 +74,18 @@ export class GoogleOAuthProvider {
     this.cfg = cfg;
     this.allowed = new Set(cfg.allowedEmails.map((e) => e.trim().toLowerCase()));
     this.redirectUri = `${cfg.publicUrl}/auth/callback`;
+    // Optional on-disk persistence so registered clients and tokens survive a
+    // container restart (otherwise every restart forces users to re-login).
+    this.storePath = cfg.oauthStorePath || '';
 
-    this.clientsStore = new InMemoryClientsStore();
+    this.clientsStore = new InMemoryClientsStore(() => this._persist());
     this._pending = new Map(); // google state  -> { client, params, expiresAt }
     this._codes = new Map(); // our auth code  -> { client, params, email, expiresAt }
     this._tokens = new Map(); // access_token   -> { clientId, scopes, email, expiresAt }
     this._refresh = new Map(); // refresh_token  -> { clientId, scopes, email, expiresAt }
+
+    // Rehydrate clients/tokens persisted before the last restart (if any).
+    this._load();
 
     // Periodic sweep: keeps the Maps from growing unbounded with abandoned flows
     // or expired tokens. unref() so it doesn't keep the process alive.
@@ -86,10 +95,48 @@ export class GoogleOAuthProvider {
 
   _sweep() {
     const t = now();
+    let changed = false;
     for (const map of [this._pending, this._codes, this._tokens, this._refresh]) {
       for (const [key, val] of map) {
-        if (val.expiresAt <= t) map.delete(key);
+        if (val.expiresAt <= t) {
+          map.delete(key);
+          if (map === this._tokens || map === this._refresh) changed = true;
+        }
       }
+    }
+    if (changed) this._persist();
+  }
+
+  // Rehydrate persisted state on startup. Expired tokens are dropped on load.
+  // Failures are non-fatal — the server just continues with an empty store.
+  _load() {
+    if (!this.storePath || !existsSync(this.storePath)) return;
+    try {
+      const data = JSON.parse(readFileSync(this.storePath, 'utf8'));
+      const t = now();
+      for (const [id, client] of data.clients || []) this.clientsStore.clients.set(id, client);
+      for (const [key, val] of data.tokens || []) if (val.expiresAt > t) this._tokens.set(key, val);
+      for (const [key, val] of data.refresh || []) if (val.expiresAt > t) this._refresh.set(key, val);
+    } catch (err) {
+      process.stderr.write(`[bitrix24] oauth store load failed: ${err.message}\n`);
+    }
+  }
+
+  // Atomically persist clients + tokens (temp file + rename, mode 0600). The
+  // short-lived in-flight state (_pending/_codes) is intentionally not persisted.
+  _persist() {
+    if (!this.storePath) return;
+    try {
+      const data = {
+        clients: [...this.clientsStore.clients.entries()],
+        tokens: [...this._tokens.entries()],
+        refresh: [...this._refresh.entries()],
+      };
+      const tmp = `${this.storePath}.tmp`;
+      writeFileSync(tmp, JSON.stringify(data), { mode: 0o600 });
+      renameSync(tmp, this.storePath);
+    } catch (err) {
+      process.stderr.write(`[bitrix24] oauth store persist failed: ${err.message}\n`);
     }
   }
 
@@ -112,6 +159,7 @@ export class GoogleOAuthProvider {
     const refreshToken = randomUUID();
     this._tokens.set(accessToken, { clientId, scopes, email, expiresAt: now() + ACCESS_TTL });
     this._refresh.set(refreshToken, { clientId, scopes, email, expiresAt: now() + REFRESH_TTL });
+    this._persist();
     return {
       access_token: accessToken,
       token_type: 'bearer',

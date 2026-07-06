@@ -10,15 +10,19 @@ RUN npm install --omit=dev --no-audit --no-fund
 COPY index.js ./
 COPY src ./src
 
-# The process runs as a non-privileged user.
-RUN useradd --create-home --uid 10001 appuser
+# The process runs as a non-privileged user. /data holds the OAuth store and is
+# owned by appuser so a named volume mounted there inherits writable ownership.
+RUN useradd --create-home --uid 10001 appuser \
+ && mkdir -p /data && chown appuser:appuser /data
 USER appuser
 
 # Inside the container we listen on all interfaces; it is NOT published outward:
 # -p 127.0.0.1:8001:8001 limits access to the local nginx only.
+# B24_OAUTH_STORE_PATH points at the mounted volume so tokens survive a restart.
 ENV B24_TRANSPORT=http \
     B24_HOST=0.0.0.0 \
-    B24_PORT=8001
+    B24_PORT=8001 \
+    B24_OAUTH_STORE_PATH=/data/oauth-state.json
 
 EXPOSE 8001
 
