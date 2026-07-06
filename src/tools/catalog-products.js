@@ -7,11 +7,11 @@ import { resolveWebhook } from '../utils/resolve-webhook.js';
 
 export const productsListSchema = z.object({
   filter: z.record(z.any()).optional().default({}).describe(
-    'Filtros. Ejemplo: { "SECTION_ID": 5, "ACTIVE": "Y" } ' +
-    'o { ">=PRICE": 100, "<=PRICE": 500 } para rango de precios'
+    'Фильтры. Пример: { "SECTION_ID": 5, "ACTIVE": "Y" } ' +
+    'или { ">=PRICE": 100, "<=PRICE": 500 } для диапазона цен'
   ),
   select: z.array(z.string()).optional().describe(
-    'Campos a retornar. Default: ID, NAME, ACTIVE, PRICE, CURRENCY_ID, SECTION_ID'
+    'Возвращаемые поля. По умолчанию: ID, NAME, ACTIVE, PRICE, CURRENCY_ID, SECTION_ID'
   ),
   all_pages: z.boolean().optional().default(false),
   webhook_url: z.string().url().optional(),
@@ -32,7 +32,7 @@ export async function productsList({ filter = {}, select, all_pages = false, web
 // ─── GET PRODUCT ──────────────────────────────────────────────────────────────
 
 export const productsGetSchema = z.object({
-  id: z.union([z.string(), z.number()]).describe('ID del producto'),
+  id: z.union([z.string(), z.number()]).describe('ID товара'),
   webhook_url: z.string().url().optional(),
 });
 
@@ -46,8 +46,8 @@ export async function productsGet({ id, webhook_url }) {
 
 export const productsCreateSchema = z.object({
   fields: z.record(z.any()).describe(
-    'Campos del producto. Requeridos: NAME. ' +
-    'Opcionales: ACTIVE, PRICE, CURRENCY_ID, DESCRIPTION, SECTION_ID, PREVIEW_PICTURE'
+    'Поля товара. Обязательные: NAME. ' +
+    'Опциональные: ACTIVE, PRICE, CURRENCY_ID, DESCRIPTION, SECTION_ID, PREVIEW_PICTURE'
   ),
   webhook_url: z.string().url().optional(),
 });
@@ -62,7 +62,7 @@ export async function productsCreate({ fields, webhook_url }) {
 
 export const productsUpdateSchema = z.object({
   id: z.union([z.string(), z.number()]),
-  fields: z.record(z.any()).describe('Campos a actualizar'),
+  fields: z.record(z.any()).describe('Обновляемые поля'),
   webhook_url: z.string().url().optional(),
 });
 
@@ -75,7 +75,7 @@ export async function productsUpdate({ id, fields, webhook_url }) {
 // ─── LIST SECTIONS ────────────────────────────────────────────────────────────
 
 export const productsSectionsSchema = z.object({
-  catalog_id: z.union([z.string(), z.number()]).optional().describe('ID del catálogo (opcional)'),
+  catalog_id: z.union([z.string(), z.number()]).optional().describe('ID каталога (опционально)'),
   webhook_url: z.string().url().optional(),
 });
 

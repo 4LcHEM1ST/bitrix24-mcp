@@ -3,7 +3,7 @@ import { Bitrix24Client } from '../bitrix24/client.js';
 import { fetchAllPages } from '../utils/pagination.js';
 import { resolveWebhook } from '../utils/resolve-webhook.js';
 
-// Mapa de entidad a método base de la REST API
+// Соответствие сущности базовому методу REST API
 const ENTITY_METHOD = {
   deal:     'crm.deal',
   contact:  'crm.contact',
@@ -12,25 +12,25 @@ const ENTITY_METHOD = {
   quote:    'crm.quote',
   invoice:  'crm.invoice',
   order:    'sale.order',
-  // SPA / Smart Process usa crm.item con entityTypeId
+  // SPA (смарт-процессы) использует crm.item с entityTypeId
 };
 
 function resolveMethod(entity, entityTypeId) {
   if (entityTypeId) return { base: 'crm.item', extra: { entityTypeId } };
   const base = ENTITY_METHOD[entity?.toLowerCase()];
-  if (!base) throw new Error(`Entidad desconocida: "${entity}". Usá deal, contact, company, lead, quote, invoice, o pasá entityTypeId para SPA.`);
+  if (!base) throw new Error(`Неизвестная сущность: "${entity}". Используйте deal, contact, company, lead, quote, invoice или передайте entityTypeId для SPA.`);
   return { base, extra: {} };
 }
 
 // ─── LIST ─────────────────────────────────────────────────────────────────────
 
 export const crmListSchema = z.object({
-  entity: z.string().optional().describe('Tipo de entidad: deal, contact, company, lead, quote, invoice'),
-  entity_type_id: z.number().int().optional().describe('ID de SPA (Smart Process). Alternativa a entity para procesos personalizados'),
-  filter: z.record(z.any()).optional().default({}).describe('Filtros. Ejemplo: { "STAGE_ID": "WON", ">DATE_CREATE": "2026-01-01" }'),
-  select: z.array(z.string()).optional().describe('Campos a retornar. Ejemplo: ["ID","TITLE","STAGE_ID","ASSIGNED_BY_ID"]'),
-  order: z.record(z.string()).optional().describe('Ordenamiento. Ejemplo: { "DATE_CREATE": "DESC" }'),
-  all_pages: z.boolean().optional().default(false).describe('Si true, trae todos los registros paginando automáticamente'),
+  entity: z.string().optional().describe('Тип сущности: deal, contact, company, lead, quote, invoice'),
+  entity_type_id: z.number().int().optional().describe('ID SPA (смарт-процесса). Альтернатива entity для пользовательских процессов'),
+  filter: z.record(z.any()).optional().default({}).describe('Фильтры. Пример: { "STAGE_ID": "WON", ">DATE_CREATE": "2026-01-01" }'),
+  select: z.array(z.string()).optional().describe('Возвращаемые поля. Пример: ["ID","TITLE","STAGE_ID","ASSIGNED_BY_ID"]'),
+  order: z.record(z.string()).optional().describe('Сортировка. Пример: { "DATE_CREATE": "DESC" }'),
+  all_pages: z.boolean().optional().default(false).describe('Если true, загружает все записи с автоматической постраничной навигацией'),
   webhook_url: z.string().url().optional(),
 });
 
@@ -55,7 +55,7 @@ export async function crmList({ entity, entity_type_id, filter = {}, select, ord
 export const crmGetSchema = z.object({
   entity: z.string().optional(),
   entity_type_id: z.number().int().optional(),
-  id: z.union([z.string(), z.number()]).describe('ID del registro'),
+  id: z.union([z.string(), z.number()]).describe('ID записи'),
   webhook_url: z.string().url().optional(),
 });
 
@@ -71,8 +71,8 @@ export async function crmGet({ entity, entity_type_id, id, webhook_url }) {
 export const crmCreateSchema = z.object({
   entity: z.string().optional(),
   entity_type_id: z.number().int().optional(),
-  fields: z.record(z.any()).describe('Campos del registro a crear. Ejemplo: { "TITLE": "Nuevo deal", "STAGE_ID": "NEW", "ASSIGNED_BY_ID": 1 }'),
-  params: z.record(z.any()).optional().describe('Parámetros adicionales del método (ej: REGISTER_SONET_EVENT)'),
+  fields: z.record(z.any()).describe('Поля создаваемой записи. Пример: { "TITLE": "Новая сделка", "STAGE_ID": "NEW", "ASSIGNED_BY_ID": 1 }'),
+  params: z.record(z.any()).optional().describe('Дополнительные параметры метода (например: REGISTER_SONET_EVENT)'),
   webhook_url: z.string().url().optional(),
 });
 
@@ -90,7 +90,7 @@ export const crmUpdateSchema = z.object({
   entity: z.string().optional(),
   entity_type_id: z.number().int().optional(),
   id: z.union([z.string(), z.number()]),
-  fields: z.record(z.any()).describe('Campos a actualizar'),
+  fields: z.record(z.any()).describe('Обновляемые поля'),
   params: z.record(z.any()).optional(),
   webhook_url: z.string().url().optional(),
 });
@@ -121,8 +121,8 @@ export async function crmDelete({ entity, entity_type_id, id, webhook_url }) {
 // ─── FIELDS ───────────────────────────────────────────────────────────────────
 
 export const crmFieldsSchema = z.object({
-  entity: z.string().optional().describe('Tipo de entidad: deal, contact, company, lead'),
-  entity_type_id: z.number().int().optional().describe('ID de SPA'),
+  entity: z.string().optional().describe('Тип сущности: deal, contact, company, lead'),
+  entity_type_id: z.number().int().optional().describe('ID SPA'),
   webhook_url: z.string().url().optional(),
 });
 
@@ -143,9 +143,9 @@ export async function crmFields({ entity, entity_type_id, webhook_url }) {
 // ─── TIMELINE ─────────────────────────────────────────────────────────────────
 
 export const timelineAddSchema = z.object({
-  entity: z.string().describe('Tipo de entidad CRM: deal, contact, company, lead'),
-  entity_id: z.union([z.string(), z.number()]).describe('ID del registro CRM'),
-  comment: z.string().describe('Texto del comentario a agregar en la línea de tiempo'),
+  entity: z.string().describe('Тип сущности CRM: deal, contact, company, lead'),
+  entity_id: z.union([z.string(), z.number()]).describe('ID записи CRM'),
+  comment: z.string().describe('Текст комментария для добавления в таймлайн'),
   webhook_url: z.string().url().optional(),
 });
 

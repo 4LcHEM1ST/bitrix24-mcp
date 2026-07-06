@@ -6,8 +6,8 @@ import { Bitrix24Reader } from '../bitrix24/reader.js';
 import { resolveWebhook } from '../utils/resolve-webhook.js';
 
 export const readConfigSchema = z.object({
-  webhook_url: z.string().url().optional().describe('URL del webhook (opcional si está configurado por defecto)'),
-  output_file: z.string().optional().describe('Ruta donde guardar el JSON exportado'),
+  webhook_url: z.string().url().optional().describe('URL вебхука (опционально, если настроен по умолчанию)'),
+  output_file: z.string().optional().describe('Путь для сохранения экспортированного JSON'),
   verbose: z.boolean().optional().default(false),
 });
 
@@ -52,7 +52,7 @@ export async function readFullConfig({ webhook_url, output_file, verbose = false
   const summary = {
     portal: client.portal,
     saved_to: filePath,
-    entity_types: `${entityData.standard.length} estándar + ${entityData.spa.length} SPA`,
+    entity_types: `${entityData.standard.length} стандартных + ${entityData.spa.length} SPA`,
     pipelines: Object.keys(pipelines).length,
     custom_fields: Object.values(customFields).reduce((a, f) => a + f.length, 0),
     automations: Object.values(automations).reduce((a, r) => a + r.length, 0),

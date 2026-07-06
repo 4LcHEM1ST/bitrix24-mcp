@@ -2,8 +2,8 @@ import { z } from 'zod';
 import { readFileSync } from 'fs';
 
 export const compareConfigsSchema = z.object({
-  source_file: z.string().describe('Ruta al archivo JSON de configuración origen'),
-  dest_file: z.string().describe('Ruta al archivo JSON de configuración destino'),
+  source_file: z.string().describe('Путь к JSON-файлу исходной конфигурации'),
+  dest_file: z.string().describe('Путь к JSON-файлу целевой конфигурации'),
 });
 
 function diffArrayByName(srcArr, dstArr, nameKey = 'NAME') {
@@ -42,7 +42,7 @@ export async function compareConfigs({ source_file, dest_file }) {
     dstPipelineNames.map(n => ({ NAME: n }))
   );
 
-  // Custom fields por entidad
+  // Пользовательские поля по сущности
   report.differences.custom_fields = {};
   const entities = new Set([
     ...Object.keys(source.custom_fields || {}),
@@ -83,8 +83,8 @@ export async function compareConfigs({ source_file, dest_file }) {
 
   report.has_differences = hasDiffs;
   report.summary = hasDiffs
-    ? 'Se encontraron diferencias entre las configuraciones. Revisar el informe antes de aplicar.'
-    : 'Las configuraciones son equivalentes en estructura.';
+    ? 'Найдены различия между конфигурациями. Просмотрите отчёт перед применением.'
+    : 'Конфигурации эквивалентны по структуре.';
 
   return report;
 }

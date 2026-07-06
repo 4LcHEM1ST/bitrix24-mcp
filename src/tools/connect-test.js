@@ -3,7 +3,7 @@ import { Bitrix24Client } from '../bitrix24/client.js';
 import { resolveWebhook } from '../utils/resolve-webhook.js';
 
 export const connectTestSchema = z.object({
-  webhook_url: z.string().url().optional().describe('URL del webhook de Bitrix24 (opcional si está configurado por defecto)'),
+  webhook_url: z.string().url().optional().describe('URL вебхука Bitrix24 (опционально, если настроен по умолчанию)'),
 });
 
 export async function connectTest({ webhook_url }) {
@@ -27,6 +27,6 @@ export async function connectTest({ webhook_url }) {
       email: profile?.EMAIL,
       is_admin: isAdmin,
     },
-    warning: isAdmin ? null : 'El usuario del webhook no tiene rol de Administrador. Algunas operaciones pueden fallar.',
+    warning: isAdmin ? null : 'Пользователь вебхука не имеет роли Администратора. Некоторые операции могут завершиться ошибкой.',
   };
 }

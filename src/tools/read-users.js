@@ -4,7 +4,7 @@ import { Bitrix24Reader } from '../bitrix24/reader.js';
 import { resolveWebhook } from '../utils/resolve-webhook.js';
 
 export const readUsersSchema = z.object({
-  webhook_url: z.string().url().optional().describe('URL del webhook (opcional si está configurado por defecto)'),
+  webhook_url: z.string().url().optional().describe('URL вебхука (опционально, если настроен по умолчанию)'),
 });
 
 export async function readUsers({ webhook_url }) {
@@ -16,6 +16,6 @@ export async function readUsers({ webhook_url }) {
     portal: client.portal,
     users,
     total: users.length,
-    summary: `${users.length} usuarios activos en ${client.portal}`,
+    summary: `${users.length} активных пользователей в ${client.portal}`,
   };
 }

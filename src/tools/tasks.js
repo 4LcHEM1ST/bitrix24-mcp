@@ -7,12 +7,12 @@ import { resolveWebhook } from '../utils/resolve-webhook.js';
 
 export const tasksListSchema = z.object({
   filter: z.record(z.any()).optional().default({}).describe(
-    'Filtros. Ejemplo: { "RESPONSIBLE_ID": 5, "GROUP_ID": 10, "STATUS": "2" } ' +
-    'Status: 1=nueva, 2=pendiente, 3=en proceso, 4=casi vencida, 5=completada, 6=vencida'
+    'Фильтры. Пример: { "RESPONSIBLE_ID": 5, "GROUP_ID": 10, "STATUS": "2" } ' +
+    'Status: 1=новая, 2=ожидает выполнения, 3=выполняется, 4=почти просрочена, 5=завершена, 6=просрочена'
   ),
   select: z.array(z.string()).optional().describe(
-    'Campos a retornar. Default: ID, TITLE, STATUS, RESPONSIBLE_ID, DEADLINE. ' +
-    'Otros: DESCRIPTION, CREATED_BY, GROUP_ID, PRIORITY, TAGS, CHECKLIST'
+    'Возвращаемые поля. По умолчанию: ID, TITLE, STATUS, RESPONSIBLE_ID, DEADLINE. ' +
+    'Прочие: DESCRIPTION, CREATED_BY, GROUP_ID, PRIORITY, TAGS, CHECKLIST'
   ),
   order: z.record(z.string()).optional().default({ DEADLINE: 'ASC' }),
   all_pages: z.boolean().optional().default(false),
@@ -41,8 +41,8 @@ export async function tasksList({ filter = {}, select, order = { DEADLINE: 'ASC'
 // ─── GET ──────────────────────────────────────────────────────────────────────
 
 export const tasksGetSchema = z.object({
-  id: z.union([z.string(), z.number()]).describe('ID de la tarea'),
-  select: z.array(z.string()).optional().describe('Campos a retornar'),
+  id: z.union([z.string(), z.number()]).describe('ID задачи'),
+  select: z.array(z.string()).optional().describe('Возвращаемые поля'),
   webhook_url: z.string().url().optional(),
 });
 
@@ -57,9 +57,9 @@ export async function tasksGet({ id, select, webhook_url }) {
 
 export const tasksCreateSchema = z.object({
   fields: z.record(z.any()).describe(
-    'Campos de la tarea. Requeridos: TITLE. ' +
-    'Opcionales: DESCRIPTION, RESPONSIBLE_ID, DEADLINE (ISO8601), GROUP_ID, ' +
-    'PRIORITY (0=baja, 1=normal, 2=alta), PARENT_ID, TAGS, CHECKLIST'
+    'Поля задачи. Обязательные: TITLE. ' +
+    'Опциональные: DESCRIPTION, RESPONSIBLE_ID, DEADLINE (ISO8601), GROUP_ID, ' +
+    'PRIORITY (0=низкий, 1=обычный, 2=высокий), PARENT_ID, TAGS, CHECKLIST'
   ),
   webhook_url: z.string().url().optional(),
 });
@@ -74,7 +74,7 @@ export async function tasksCreate({ fields, webhook_url }) {
 
 export const tasksUpdateSchema = z.object({
   id: z.union([z.string(), z.number()]),
-  fields: z.record(z.any()).describe('Campos a actualizar'),
+  fields: z.record(z.any()).describe('Обновляемые поля'),
   webhook_url: z.string().url().optional(),
 });
 
@@ -87,7 +87,7 @@ export async function tasksUpdate({ id, fields, webhook_url }) {
 // ─── COMPLETE ─────────────────────────────────────────────────────────────────
 
 export const tasksCompleteSchema = z.object({
-  id: z.union([z.string(), z.number()]).describe('ID de la tarea a completar'),
+  id: z.union([z.string(), z.number()]).describe('ID завершаемой задачи'),
   webhook_url: z.string().url().optional(),
 });
 

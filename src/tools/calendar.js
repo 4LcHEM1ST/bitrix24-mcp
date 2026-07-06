@@ -6,11 +6,11 @@ import { resolveWebhook } from '../utils/resolve-webhook.js';
 
 export const calendarListSchema = z.object({
   type: z.enum(['user', 'group', 'company_calendar']).optional().default('user').describe(
-    'Tipo de calendario: user (personal), group (grupo de trabajo), company_calendar (empresa)'
+    'Тип календаря: user (личный), group (рабочая группа), company_calendar (компания)'
   ),
-  owner_id: z.union([z.string(), z.number()]).optional().describe('ID del usuario o grupo propietario. Default: usuario del webhook'),
-  from: z.string().optional().describe('Fecha inicio ISO8601. Ejemplo: "2026-01-01"'),
-  to: z.string().optional().describe('Fecha fin ISO8601. Ejemplo: "2026-12-31"'),
+  owner_id: z.union([z.string(), z.number()]).optional().describe('ID пользователя или рабочей группы-владельца. По умолчанию: пользователь вебхука'),
+  from: z.string().optional().describe('Дата начала ISO8601. Пример: "2026-01-01"'),
+  to: z.string().optional().describe('Дата окончания ISO8601. Пример: "2026-12-31"'),
   webhook_url: z.string().url().optional(),
 });
 
@@ -32,16 +32,16 @@ export async function calendarList({ type = 'user', owner_id, from, to, webhook_
 export const calendarCreateSchema = z.object({
   type: z.enum(['user', 'group', 'company_calendar']).optional().default('user'),
   owner_id: z.union([z.string(), z.number()]).optional(),
-  name: z.string().describe('Nombre/título del evento'),
-  date_from: z.string().describe('Fecha/hora inicio ISO8601. Ejemplo: "2026-06-15 10:00:00"'),
-  date_to: z.string().describe('Fecha/hora fin ISO8601. Ejemplo: "2026-06-15 11:00:00"'),
+  name: z.string().describe('Название/заголовок события'),
+  date_from: z.string().describe('Дата/время начала ISO8601. Пример: "2026-06-15 10:00:00"'),
+  date_to: z.string().describe('Дата/время окончания ISO8601. Пример: "2026-06-15 11:00:00"'),
   description: z.string().optional(),
   location: z.string().optional(),
-  attendees: z.array(z.union([z.string(), z.number()])).optional().describe('IDs de usuarios invitados'),
+  attendees: z.array(z.union([z.string(), z.number()])).optional().describe('ID приглашённых пользователей'),
   remind: z.array(z.object({
     type: z.enum(['min', 'hour', 'day']),
     count: z.number(),
-  })).optional().describe('Recordatorios. Ejemplo: [{ type: "min", count: 15 }]'),
+  })).optional().describe('Напоминания. Пример: [{ type: "min", count: 15 }]'),
   webhook_url: z.string().url().optional(),
 });
 

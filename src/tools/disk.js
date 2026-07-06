@@ -17,8 +17,8 @@ export async function diskStorages({ webhook_url }) {
 // ─── LIST FOLDER CHILDREN ────────────────────────────────────────────────────
 
 export const diskFolderListSchema = z.object({
-  folder_id: z.union([z.string(), z.number()]).optional().describe('ID de la carpeta. Si no se indica, lista el storage raíz del usuario'),
-  filter: z.record(z.any()).optional().default({}).describe('Filtros opcionales. Ejemplo: { "NAME": "Contratos" }'),
+  folder_id: z.union([z.string(), z.number()]).optional().describe('ID папки. Если не указан, выводит список корневого хранилища пользователя'),
+  filter: z.record(z.any()).optional().default({}).describe('Опциональные фильтры. Пример: { "NAME": "Договоры" }'),
   webhook_url: z.string().url().optional(),
 });
 
@@ -48,7 +48,7 @@ export async function diskFolderList({ folder_id, filter = {}, webhook_url }) {
 // ─── GET FILE ────────────────────────────────────────────────────────────────
 
 export const diskFileGetSchema = z.object({
-  file_id: z.union([z.string(), z.number()]).describe('ID del archivo'),
+  file_id: z.union([z.string(), z.number()]).describe('ID файла'),
   webhook_url: z.string().url().optional(),
 });
 
@@ -61,9 +61,9 @@ export async function diskFileGet({ file_id, webhook_url }) {
 // ─── UPLOAD FILE ─────────────────────────────────────────────────────────────
 
 export const diskFileUploadSchema = z.object({
-  folder_id: z.union([z.string(), z.number()]).describe('ID de la carpeta destino'),
-  name: z.string().describe('Nombre del archivo incluyendo extensión'),
-  content_base64: z.string().describe('Contenido del archivo en Base64'),
+  folder_id: z.union([z.string(), z.number()]).describe('ID папки назначения'),
+  name: z.string().describe('Имя файла, включая расширение'),
+  content_base64: z.string().describe('Содержимое файла в Base64'),
   webhook_url: z.string().url().optional(),
 });
 

@@ -4,8 +4,8 @@ import { Bitrix24Reader } from '../bitrix24/reader.js';
 import { resolveWebhook } from '../utils/resolve-webhook.js';
 
 export const readCustomFieldsSchema = z.object({
-  webhook_url: z.string().url().optional().describe('URL del webhook (opcional si está configurado por defecto)'),
-  entity_type_id: z.string().optional().describe('Tipo de entidad (deal, contact, company, lead) — opcional'),
+  webhook_url: z.string().url().optional().describe('URL вебхука (опционально, если настроен по умолчанию)'),
+  entity_type_id: z.string().optional().describe('Тип сущности (deal, contact, company, lead) — опционально'),
 });
 
 export async function readCustomFields({ webhook_url, entity_type_id }) {
@@ -23,6 +23,6 @@ export async function readCustomFields({ webhook_url, entity_type_id }) {
     custom_fields: fields,
     counts_by_entity: byEntity,
     total_fields: totalCount,
-    summary: `${totalCount} campos personalizados: ${Object.entries(byEntity).map(([e, n]) => `${n} en ${e}`).join(', ')}`,
+    summary: `${totalCount} пользовательских полей: ${Object.entries(byEntity).map(([e, n]) => `${n} в ${e}`).join(', ')}`,
   };
 }

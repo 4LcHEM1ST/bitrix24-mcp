@@ -2,10 +2,10 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { loadConfig } from './src/config.js';
 
-// ── Universales ───────────────────────────────────────────────────────────────
+// ── Универсальные ─────────────────────────────────────────────────────────────
 import { callSchema, universalCall, batchSchema, universalBatch } from './src/tools/universal-call.js';
 
-// ── CRM Datos ─────────────────────────────────────────────────────────────────
+// ── CRM: данные ───────────────────────────────────────────────────────────────
 import {
   crmListSchema, crmList,
   crmGetSchema, crmGet,
@@ -16,7 +16,7 @@ import {
   timelineAddSchema, timelineAdd,
 } from './src/tools/crm.js';
 
-// ── CRM Config ────────────────────────────────────────────────────────────────
+// ── CRM: конфигурация ─────────────────────────────────────────────────────────
 import { connectTestSchema, connectTest } from './src/tools/connect-test.js';
 import { readConfigSchema, readFullConfig } from './src/tools/read-config.js';
 import { readEntityTypesSchema, readEntityTypes } from './src/tools/read-entity-types.js';
@@ -28,7 +28,7 @@ import { compareConfigsSchema, compareConfigs } from './src/tools/compare-config
 import { applyConfigSchema, applyConfig } from './src/tools/apply-config.js';
 import { saveUserMappingSchema, saveUserMappingTool } from './src/tools/save-user-mapping.js';
 
-// ── Tareas ────────────────────────────────────────────────────────────────────
+// ── Задачи ────────────────────────────────────────────────────────────────────
 import {
   tasksListSchema, tasksList,
   tasksGetSchema, tasksGet,
@@ -37,11 +37,11 @@ import {
   tasksCompleteSchema, tasksComplete,
 } from './src/tools/tasks.js';
 
-// ── Usuarios y Departamentos ──────────────────────────────────────────────────
+// ── Пользователи и отделы ──────────────────────────────────────────────────────
 import { usersListSchema, usersList } from './src/tools/users-departments.js';
 import { departmentsListSchema, departmentsList } from './src/tools/users-departments.js';
 
-// ── Disco ─────────────────────────────────────────────────────────────────────
+// ── Диск ──────────────────────────────────────────────────────────────────────
 import {
   diskStoragesSchema, diskStorages,
   diskFolderListSchema, diskFolderList,
@@ -49,10 +49,10 @@ import {
   diskFileUploadSchema, diskFileUpload,
 } from './src/tools/disk.js';
 
-// ── Calendario ────────────────────────────────────────────────────────────────
+// ── Календарь ─────────────────────────────────────────────────────────────────
 import { calendarListSchema, calendarList, calendarCreateSchema, calendarCreate } from './src/tools/calendar.js';
 
-// ── Feed, Notificaciones, Grupos, BizProc, Telefonía ─────────────────────────
+// ── Лента, уведомления, группы, бизнес-процессы, телефония ────────────────────
 import {
   feedPostSchema, feedPost,
   notifySendSchema, notifySend,
@@ -63,7 +63,7 @@ import {
   telephonyCallsSchema, telephonyCalls,
 } from './src/tools/feed-notifications.js';
 
-// ── Catálogo / Productos ──────────────────────────────────────────────────────
+// ── Каталог / товары ──────────────────────────────────────────────────────────
 import {
   productsListSchema, productsList,
   productsGetSchema, productsGet,
@@ -71,6 +71,14 @@ import {
   productsUpdateSchema, productsUpdate,
   productsSectionsSchema, productsSections,
 } from './src/tools/catalog-products.js';
+
+// ── Почта (чтение) ────────────────────────────────────────────────────────────
+import {
+  mailMailboxListSchema, mailMailboxList,
+  mailMessageListSchema, mailMessageList,
+  mailMessageGetSchema, mailMessageGet,
+  mailMessageThreadSchema, mailMessageThread,
+} from './src/tools/mail.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -91,196 +99,215 @@ function wrap(fn) {
 // Registers ALL tools on an McpServer. Reused by the stdio transport (a single
 // long-lived server) and by the http transport (a fresh server per request).
 export function registerTools(server) {
-// ── Universales ───────────────────────────────────────────────────────────────
+// ── Универсальные ─────────────────────────────────────────────────────────────
 server.tool('b24_call',
-  'Llama CUALQUIER método REST de la API de Bitrix24. Úsalo cuando no exista un tool específico. ' +
-  'Referencia completa: https://dev.1c-bitrix.ru/rest_help/',
+  'Вызывает ЛЮБОЙ REST-метод API Bitrix24. Используйте, когда нет специализированного инструмента. ' +
+  'Полный справочник: https://dev.1c-bitrix.ru/rest_help/',
   callSchema.shape, wrap(universalCall));
 
 server.tool('b24_batch',
-  'Ejecuta múltiples llamadas a la API de Bitrix24 en una sola request HTTP. ' +
-  'Los resultados de una llamada pueden usarse como parámetros de la siguiente con $result[alias][campo].',
+  'Выполняет несколько вызовов API Bitrix24 в одном HTTP-запросе. ' +
+  'Результаты одного вызова можно использовать как параметры следующего через $result[alias][поле].',
   batchSchema.shape, wrap(universalBatch));
 
-// ── Conexión ──────────────────────────────────────────────────────────────────
+// ── Подключение ───────────────────────────────────────────────────────────────
 server.tool('b24_test_connection',
-  'Verifica la conexión al webhook de Bitrix24 y confirma datos del portal y permisos del usuario.',
+  'Проверяет подключение к вебхуку Bitrix24 и подтверждает данные портала и права пользователя.',
   connectTestSchema.shape, wrap(connectTest));
 
-// ── CRM Datos ─────────────────────────────────────────────────────────────────
+// ── CRM: данные ───────────────────────────────────────────────────────────────
 server.tool('b24_crm_list',
-  'Lista registros CRM: deals, contactos, empresas, leads, cotizaciones, o items de SPA. Soporta filtros, selección de campos y paginación automática.',
+  'Выводит список записей CRM: сделки, контакты, компании, лиды, предложения или элементы SPA. Поддерживает фильтры, выбор полей и автоматическую постраничную навигацию.',
   crmListSchema.shape, wrap(crmList));
 
 server.tool('b24_crm_get',
-  'Obtiene un registro CRM completo por ID: deal, contact, company, lead, o item de SPA.',
+  'Получает полную запись CRM по ID: сделка, контакт, компания, лид или элемент SPA.',
   crmGetSchema.shape, wrap(crmGet));
 
 server.tool('b24_crm_create',
-  'Crea un nuevo registro CRM: deal, contact, company, lead, cotización, o item de SPA.',
+  'Создаёт новую запись CRM: сделку, контакт, компанию, лид, предложение или элемент SPA.',
   crmCreateSchema.shape, wrap(crmCreate));
 
 server.tool('b24_crm_update',
-  'Actualiza campos de un registro CRM existente.',
+  'Обновляет поля существующей записи CRM.',
   crmUpdateSchema.shape, wrap(crmUpdate));
 
 server.tool('b24_crm_delete',
-  'Elimina un registro CRM por ID.',
+  'Удаляет запись CRM по ID.',
   crmDeleteSchema.shape, wrap(crmDelete));
 
 server.tool('b24_crm_fields',
-  'Lista todos los campos disponibles de una entidad CRM (estándar + personalizados) con sus tipos, etiquetas y configuración.',
+  'Выводит все доступные поля сущности CRM (стандартные + пользовательские) с их типами, названиями и настройками.',
   crmFieldsSchema.shape, wrap(crmFields));
 
 server.tool('b24_crm_timeline_add',
-  'Agrega un comentario o actividad a la línea de tiempo de un registro CRM.',
+  'Добавляет комментарий или активность в таймлайн записи CRM.',
   timelineAddSchema.shape, wrap(timelineAdd));
 
-// ── CRM Config ────────────────────────────────────────────────────────────────
+// ── CRM: конфигурация ─────────────────────────────────────────────────────────
 server.tool('b24_read_full_config',
-  'Lee TODA la configuración estructural de la instancia: entidades, pipelines, etapas, campos, automatizaciones, catálogo y usuarios. Exporta a JSON.',
+  'Читает ВСЮ структурную конфигурацию портала: сущности, воронки, стадии, поля, автоматизации, каталог и пользователей. Экспортирует в JSON.',
   readConfigSchema.shape, wrap(readFullConfig));
 
 server.tool('b24_read_entity_types',
-  'Lee todos los tipos de entidad CRM y SPA (Smart Process Automation) con sus atributos.',
+  'Читает все типы сущностей CRM и SPA (смарт-процессы) с их атрибутами.',
   readEntityTypesSchema.shape, wrap(readEntityTypes));
 
 server.tool('b24_read_pipelines',
-  'Lee pipelines (funnels) y sus etapas con colores, semántica y orden.',
+  'Читает воронки и их стадии с цветами, семантикой и порядком.',
   readPipelinesSchema.shape, wrap(readPipelines));
 
 server.tool('b24_read_custom_fields',
-  'Lee campos personalizados de todas las entidades CRM con su configuración completa.',
+  'Читает пользовательские поля всех сущностей CRM с их полной конфигурацией.',
   readCustomFieldsSchema.shape, wrap(readCustomFields));
 
 server.tool('b24_read_automations',
-  'Lee reglas de automatización (robots y triggers) por etapa con condiciones y acciones.',
+  'Читает правила автоматизации (роботы и триггеры) по стадиям с условиями и действиями.',
   readAutomationsSchema.shape, wrap(readAutomations));
 
 server.tool('b24_read_product_catalog',
-  'Lee la estructura de configuración del catálogo de productos: secciones, propiedades, precios y unidades.',
+  'Читает структуру конфигурации каталога товаров: разделы, свойства, цены и единицы измерения.',
   readProductCatalogSchema.shape, wrap(readProductCatalog));
 
 server.tool('b24_compare_configs',
-  'Compara dos archivos JSON de configuración e informa qué existe en origen y no en destino, y viceversa.',
+  'Сравнивает два JSON-файла конфигурации и сообщает, что есть в источнике и отсутствует в приёмнике, и наоборот.',
   compareConfigsSchema.shape, wrap(compareConfigs));
 
 server.tool('b24_apply_config',
-  'Aplica una configuración exportada a una instancia destino. Crea si no existe, actualiza si existe, nunca elimina.',
+  'Применяет экспортированную конфигурацию к целевому порталу. Создаёт, если не существует, обновляет, если существует, никогда не удаляет.',
   applyConfigSchema.shape, wrap(applyConfig));
 
 server.tool('b24_save_user_mapping',
-  'Genera y guarda el mapeo de IDs de usuarios entre dos instancias, necesario para replicar automatizaciones.',
+  'Генерирует и сохраняет сопоставление ID пользователей между двумя порталами, необходимое для переноса автоматизаций.',
   saveUserMappingSchema.shape, wrap(saveUserMappingTool));
 
-// ── Tareas ────────────────────────────────────────────────────────────────────
+// ── Задачи ────────────────────────────────────────────────────────────────────
 server.tool('b24_tasks_list',
-  'Lista tareas con filtros por responsable, grupo, estado, vencimiento, etc.',
+  'Выводит список задач с фильтрами по ответственному, группе, статусу, сроку и т.д.',
   tasksListSchema.shape, wrap(tasksList));
 
 server.tool('b24_tasks_get',
-  'Obtiene el detalle completo de una tarea por ID.',
+  'Получает полную информацию о задаче по ID.',
   tasksGetSchema.shape, wrap(tasksGet));
 
 server.tool('b24_tasks_create',
-  'Crea una nueva tarea con título, descripción, responsable, fecha límite, prioridad y más.',
+  'Создаёт новую задачу с названием, описанием, ответственным, сроком, приоритетом и другими параметрами.',
   tasksCreateSchema.shape, wrap(tasksCreate));
 
 server.tool('b24_tasks_update',
-  'Actualiza campos de una tarea existente.',
+  'Обновляет поля существующей задачи.',
   tasksUpdateSchema.shape, wrap(tasksUpdate));
 
 server.tool('b24_tasks_complete',
-  'Marca una tarea como completada.',
+  'Отмечает задачу как завершённую.',
   tasksCompleteSchema.shape, wrap(tasksComplete));
 
-// ── Usuarios y Departamentos ──────────────────────────────────────────────────
+// ── Пользователи и отделы ──────────────────────────────────────────────────────
 server.tool('b24_users_list',
-  'Lista usuarios activos con nombre, email, cargo, departamento y estado online.',
+  'Выводит список активных пользователей с именем, email, должностью, отделом и статусом онлайн.',
   usersListSchema.shape, wrap(usersList));
 
 server.tool('b24_departments_list',
-  'Lista departamentos de la estructura organizativa con jerarquía y responsables.',
+  'Выводит список отделов организационной структуры с иерархией и руководителями.',
   departmentsListSchema.shape, wrap(departmentsList));
 
-// ── Disco ─────────────────────────────────────────────────────────────────────
+// ── Диск ──────────────────────────────────────────────────────────────────────
 server.tool('b24_disk_storages',
-  'Lista todos los storages disponibles (personal, grupos, empresa).',
+  'Выводит список всех доступных хранилищ (личное, групп, компании).',
   diskStoragesSchema.shape, wrap(diskStorages));
 
 server.tool('b24_disk_folder_list',
-  'Lista el contenido de una carpeta en el Disk de Bitrix24.',
+  'Выводит содержимое папки в Диске Bitrix24.',
   diskFolderListSchema.shape, wrap(diskFolderList));
 
 server.tool('b24_disk_file_get',
-  'Obtiene información de un archivo incluyendo URL de descarga.',
+  'Получает информацию о файле, включая ссылку для скачивания.',
   diskFileGetSchema.shape, wrap(diskFileGet));
 
 server.tool('b24_disk_file_upload',
-  'Sube un archivo a una carpeta del Disk de Bitrix24.',
+  'Загружает файл в папку Диска Bitrix24.',
   diskFileUploadSchema.shape, wrap(diskFileUpload));
 
-// ── Calendario ────────────────────────────────────────────────────────────────
+// ── Календарь ─────────────────────────────────────────────────────────────────
 server.tool('b24_calendar_list',
-  'Lista eventos de calendario personal, de grupo o de empresa con filtro de fechas.',
+  'Выводит события личного, группового или корпоративного календаря с фильтром по датам.',
   calendarListSchema.shape, wrap(calendarList));
 
 server.tool('b24_calendar_create',
-  'Crea un evento en el calendario con participantes, ubicación y recordatorios.',
+  'Создаёт событие в календаре с участниками, местом и напоминаниями.',
   calendarCreateSchema.shape, wrap(calendarCreate));
 
-// ── Feed y Comunicación ───────────────────────────────────────────────────────
+// ── Лента и коммуникации ──────────────────────────────────────────────────────
 server.tool('b24_feed_post',
-  'Publica un mensaje en el feed de actividad (Live Feed) de Bitrix24, con soporte BB-code.',
+  'Публикует сообщение в Живой ленте Bitrix24 с поддержкой BB-code.',
   feedPostSchema.shape, wrap(feedPost));
 
 server.tool('b24_notify_send',
-  'Envía una notificación personal a un usuario dentro de Bitrix24.',
+  'Отправляет персональное уведомление пользователю внутри Bitrix24.',
   notifySendSchema.shape, wrap(notifySend));
 
 server.tool('b24_chat_send',
-  'Envía un mensaje a un chat privado o grupal en el IM de Bitrix24.',
+  'Отправляет сообщение в личный или групповой чат мессенджера Bitrix24.',
   chatSendSchema.shape, wrap(chatSend));
 
-// ── Grupos ────────────────────────────────────────────────────────────────────
+// ── Группы ────────────────────────────────────────────────────────────────────
 server.tool('b24_groups_list',
-  'Lista grupos de trabajo (workgroups y proyectos) con filtros por estado y visibilidad.',
+  'Выводит список рабочих групп и проектов с фильтрами по статусу и видимости.',
   groupsListSchema.shape, wrap(groupsList));
 
-// ── Procesos de Negocio ───────────────────────────────────────────────────────
+// ── Бизнес-процессы ───────────────────────────────────────────────────────────
 server.tool('b24_bizproc_list',
-  'Lista instancias de procesos de negocio activas, filtradas por entidad o registro.',
+  'Выводит список активных экземпляров бизнес-процессов с фильтром по сущности или записи.',
   bizprocListSchema.shape, wrap(bizprocList));
 
 server.tool('b24_bizproc_start',
-  'Inicia un proceso de negocio (workflow) sobre un documento o registro CRM.',
+  'Запускает бизнес-процесс для документа или записи CRM.',
   bizprocStartSchema.shape, wrap(bizprocStart));
 
-// ── Telefonía ─────────────────────────────────────────────────────────────────
+// ── Телефония ─────────────────────────────────────────────────────────────────
 server.tool('b24_telephony_calls',
-  'Lista el historial de llamadas con filtros por entidad CRM, usuario, duración y fecha.',
+  'Выводит историю звонков с фильтрами по сущности CRM, пользователю, длительности и дате.',
   telephonyCallsSchema.shape, wrap(telephonyCalls));
 
-// ── Catálogo / Productos ──────────────────────────────────────────────────────
+// ── Каталог / товары ──────────────────────────────────────────────────────────
 server.tool('b24_products_list',
-  'Lista productos del catálogo con filtros por sección, precio, estado activo, etc.',
+  'Выводит список товаров каталога с фильтрами по разделу, цене, активности и т.д.',
   productsListSchema.shape, wrap(productsList));
 
 server.tool('b24_products_get',
-  'Obtiene el detalle completo de un producto por ID.',
+  'Получает полную информацию о товаре по ID.',
   productsGetSchema.shape, wrap(productsGet));
 
 server.tool('b24_products_create',
-  'Crea un nuevo producto en el catálogo.',
+  'Создаёт новый товар в каталоге.',
   productsCreateSchema.shape, wrap(productsCreate));
 
 server.tool('b24_products_update',
-  'Actualiza un producto del catálogo.',
+  'Обновляет товар каталога.',
   productsUpdateSchema.shape, wrap(productsUpdate));
 
 server.tool('b24_products_sections',
-  'Lista las secciones/categorías del catálogo de productos.',
+  'Выводит разделы/категории каталога товаров.',
   productsSectionsSchema.shape, wrap(productsSections));
+
+// ── Почта / чтение (REST v3, требуется scope `mail`) ──────────────────────────
+server.tool('b24_mail_mailbox_list',
+  'Выводит список почтовых ящиков пользователя вебхука с опциональным фильтром по имени или email. ' +
+  'Возвращает id, name, email и senderName. id используется в b24_mail_message_list.',
+  mailMailboxListSchema.shape, wrap(mailMailboxList));
+
+server.tool('b24_mail_message_list',
+  'Выводит список писем почтового ящика (по mailbox_id). Позволяет фильтровать по тексту, диапазону дат, ' +
+  'признаку прочтения, наличию вложений и папке, с постраничной навигацией.',
+  mailMessageListSchema.shape, wrap(mailMessageList));
+
+server.tool('b24_mail_message_get',
+  'Получает письмо целиком по его ID, включая тело сообщения. Позволяет выбрать поля через select.',
+  mailMessageGetSchema.shape, wrap(mailMessageGet));
+
+server.tool('b24_mail_message_thread',
+  'Возвращает цепочку писем по ID любого сообщения переписки. Максимум 50.',
+  mailMessageThreadSchema.shape, wrap(mailMessageThread));
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -292,16 +319,16 @@ async function runStdio() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
 
-  // Auto-test de conexión al arrancar
+  // Автопроверка подключения при запуске
   if (process.env.B24_DEFAULT_WEBHOOK) {
     try {
       const { Bitrix24Client } = await import('./src/bitrix24/client.js');
       const client = new Bitrix24Client(process.env.B24_DEFAULT_WEBHOOK);
       const res = await client.call('profile');
       const name = `${res.result?.NAME || ''} ${res.result?.LAST_NAME || ''}`.trim();
-      process.stderr.write(`[bitrix24] ✓ Conectado a ${client.portal} como ${name} | ${Object.keys(server._registeredTools ?? {}).length || 40} tools activos\n`);
+      process.stderr.write(`[bitrix24] ✓ Подключено к ${client.portal} как ${name} | активных инструментов: ${Object.keys(server._registeredTools ?? {}).length || 44}\n`);
     } catch (err) {
-      process.stderr.write(`[bitrix24] ✗ No se pudo conectar: ${err.message}\n`);
+      process.stderr.write(`[bitrix24] ✗ Не удалось подключиться: ${err.message}\n`);
     }
   }
 }

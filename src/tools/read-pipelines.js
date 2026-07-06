@@ -4,8 +4,8 @@ import { Bitrix24Reader } from '../bitrix24/reader.js';
 import { resolveWebhook } from '../utils/resolve-webhook.js';
 
 export const readPipelinesSchema = z.object({
-  webhook_url: z.string().url().optional().describe('URL del webhook (opcional si está configurado por defecto)'),
-  entity_type_id: z.number().int().optional().describe('ID del tipo de entidad (opcional, default: todos)'),
+  webhook_url: z.string().url().optional().describe('URL вебхука (опционально, если настроен по умолчанию)'),
+  entity_type_id: z.number().int().optional().describe('ID типа сущности (опционально, по умолчанию: все)'),
 });
 
 export async function readPipelines({ webhook_url, entity_type_id }) {
@@ -19,6 +19,6 @@ export async function readPipelines({ webhook_url, entity_type_id }) {
   return {
     portal: client.portal,
     pipelines,
-    summary: `${count} pipelines con ${stageCount} etapas en total`,
+    summary: `${count} воронок с ${stageCount} стадиями в общей сложности`,
   };
 }

@@ -6,14 +6,14 @@ import { resolveWebhook } from '../utils/resolve-webhook.js';
 // ─── FEED POST ────────────────────────────────────────────────────────────────
 
 export const feedPostSchema = z.object({
-  message: z.string().describe('Texto del mensaje. Soporta BB-code: [B]negrita[/B], [I]italica[/I], [URL=http://...]texto[/URL]'),
-  title: z.string().optional().describe('Título del post (opcional)'),
+  message: z.string().describe('Текст сообщения. Поддерживает BB-code: [B]жирный[/B], [I]курсив[/I], [URL=http://...]текст[/URL]'),
+  title: z.string().optional().describe('Заголовок публикации (опционально)'),
   destination: z.array(z.union([z.string(), z.number()])).optional().describe(
-    'IDs de usuarios o grupos destino. Si está vacío, se publica para todos. ' +
-    'Formato: ["U5", "U10"] para usuarios, ["SG12"] para grupos'
+    'ID пользователей или рабочих групп назначения. Если пусто, публикуется для всех. ' +
+    'Формат: ["U5", "U10"] для пользователей, ["SG12"] для рабочих групп'
   ),
-  files: z.array(z.string()).optional().describe('Adjuntos en formato Base64'),
-  important: z.boolean().optional().default(false).describe('Si true, marca el post como importante'),
+  files: z.array(z.string()).optional().describe('Вложения в формате Base64'),
+  important: z.boolean().optional().default(false).describe('Если true, помечает публикацию как важную'),
   webhook_url: z.string().url().optional(),
 });
 
@@ -32,12 +32,12 @@ export async function feedPost({ message, title, destination, files, important =
 // ─── NOTIFY SEND ──────────────────────────────────────────────────────────────
 
 export const notifySendSchema = z.object({
-  to: z.union([z.string(), z.number()]).describe('ID del usuario destinatario'),
-  message: z.string().describe('Texto de la notificación'),
+  to: z.union([z.string(), z.number()]).describe('ID пользователя-получателя'),
+  message: z.string().describe('Текст уведомления'),
   type: z.enum(['SYSTEM', 'CONFIRM', 'LINES']).optional().default('SYSTEM').describe(
-    'Tipo: SYSTEM (notificación simple), CONFIRM (con botones confirmar/rechazar), LINES (Open Lines)'
+    'Тип: SYSTEM (простое уведомление), CONFIRM (с кнопками подтвердить/отклонить), LINES (Open Lines)'
   ),
-  tag: z.string().optional().describe('Tag para agrupar o reemplazar notificaciones previas del mismo tag'),
+  tag: z.string().optional().describe('Тег для группировки или замены предыдущих уведомлений с тем же тегом'),
   webhook_url: z.string().url().optional(),
 });
 
@@ -56,8 +56,8 @@ export async function notifySend({ to, message, type = 'SYSTEM', tag, webhook_ur
 
 export const groupsListSchema = z.object({
   filter: z.record(z.any()).optional().default({}).describe(
-    'Filtros. Ejemplo: { "ACTIVE": "Y", "VISIBLE": "Y" }. ' +
-    'Campos: NAME, ACTIVE, VISIBLE, OPENED, PROJECT'
+    'Фильтры. Пример: { "ACTIVE": "Y", "VISIBLE": "Y" }. ' +
+    'Поля: NAME, ACTIVE, VISIBLE, OPENED, PROJECT'
   ),
   select: z.array(z.string()).optional(),
   webhook_url: z.string().url().optional(),
@@ -76,10 +76,10 @@ export async function groupsList({ filter = {}, select, webhook_url }) {
 
 export const chatSendSchema = z.object({
   dialog_id: z.union([z.string(), z.number()]).describe(
-    'ID del chat. Para mensaje privado: "userId_NUMERO" o ID numérico del usuario. ' +
-    'Para chat grupal: ID del chat'
+    'ID чата. Для личного сообщения: "userId_НОМЕР" или числовой ID пользователя. ' +
+    'Для группового чата: ID чата'
   ),
-  message: z.string().describe('Texto del mensaje'),
+  message: z.string().describe('Текст сообщения'),
   webhook_url: z.string().url().optional(),
 });
 
@@ -95,8 +95,8 @@ export async function chatSend({ dialog_id, message, webhook_url }) {
 // ─── BIZPROC ──────────────────────────────────────────────────────────────────
 
 export const bizprocListSchema = z.object({
-  entity: z.string().optional().describe('Entidad CRM: CRM_DEAL, CRM_CONTACT, CRM_COMPANY, CRM_LEAD'),
-  entity_id: z.union([z.string(), z.number()]).optional().describe('ID del registro CRM'),
+  entity: z.string().optional().describe('Сущность CRM: CRM_DEAL, CRM_CONTACT, CRM_COMPANY, CRM_LEAD'),
+  entity_id: z.union([z.string(), z.number()]).optional().describe('ID записи CRM'),
   webhook_url: z.string().url().optional(),
 });
 
@@ -110,12 +110,12 @@ export async function bizprocList({ entity, entity_id, webhook_url }) {
 }
 
 export const bizprocStartSchema = z.object({
-  template_id: z.union([z.string(), z.number()]).describe('ID de la plantilla de proceso de negocio'),
+  template_id: z.union([z.string(), z.number()]).describe('ID шаблона бизнес-процесса'),
   document_id: z.array(z.string()).describe(
-    'Array con 3 elementos identificando el documento: ' +
-    '["crm", "CCrmDocumentDeal", "DEAL_123"] para un deal con ID 123'
+    'Массив из 3 элементов, идентифицирующий документ: ' +
+    '["crm", "CCrmDocumentDeal", "DEAL_123"] для сделки с ID 123'
   ),
-  parameters: z.record(z.any()).optional().default({}).describe('Parámetros del proceso'),
+  parameters: z.record(z.any()).optional().default({}).describe('Параметры бизнес-процесса'),
   webhook_url: z.string().url().optional(),
 });
 
@@ -133,8 +133,8 @@ export async function bizprocStart({ template_id, document_id, parameters = {}, 
 
 export const telephonyCallsSchema = z.object({
   filter: z.record(z.any()).optional().default({}).describe(
-    'Filtros. Ejemplo: { "CRM_ENTITY_TYPE": "DEAL", "CRM_ENTITY_ID": 123 } ' +
-    'o { "CALL_DURATION": ">60" } para llamadas de más de 60 segundos'
+    'Фильтры. Пример: { "CRM_ENTITY_TYPE": "DEAL", "CRM_ENTITY_ID": 123 } ' +
+    'или { "CALL_DURATION": ">60" } для звонков длительностью более 60 секунд'
   ),
   select: z.array(z.string()).optional(),
   webhook_url: z.string().url().optional(),

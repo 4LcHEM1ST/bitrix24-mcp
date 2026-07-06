@@ -7,10 +7,10 @@ import { resolveWebhook } from '../utils/resolve-webhook.js';
 
 export const usersListSchema = z.object({
   filter: z.record(z.any()).optional().default({ ACTIVE: true }).describe(
-    'Filtros. Default: { ACTIVE: true }. Otros: { "UF_DEPARTMENT": 5, "NAME": "Brian" }'
+    'Фильтры. По умолчанию: { ACTIVE: true }. Другие: { "UF_DEPARTMENT": 5, "NAME": "Brian" }'
   ),
   select: z.array(z.string()).optional().describe(
-    'Campos a retornar. Default: ID, NAME, LAST_NAME, EMAIL, WORK_POSITION, UF_DEPARTMENT, IS_ONLINE'
+    'Поля для возврата. По умолчанию: ID, NAME, LAST_NAME, EMAIL, WORK_POSITION, UF_DEPARTMENT, IS_ONLINE'
   ),
   all_pages: z.boolean().optional().default(true),
   webhook_url: z.string().url().optional(),
@@ -32,7 +32,7 @@ export async function usersList({ filter = { ACTIVE: true }, select, all_pages =
 
 export const departmentsListSchema = z.object({
   filter: z.record(z.any()).optional().default({}).describe(
-    'Filtros. Ejemplo: { "PARENT": 5 } para subdepartamentos. { "NAME": "Ventas" } para buscar por nombre'
+    'Фильтры. Пример: { "PARENT": 5 } для подотделов. { "NAME": "Продажи" } для поиска по имени'
   ),
   webhook_url: z.string().url().optional(),
 });

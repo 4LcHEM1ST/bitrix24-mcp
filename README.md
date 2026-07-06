@@ -22,6 +22,7 @@ Built and maintained by **[Bit2Beat](https://bit2beat.com)** — Bitrix24 specia
 | **Groups** | List workgroups and projects. |
 | **Business Processes** | List active workflows and start new ones. |
 | **Telephony** | Query the call history log. |
+| **Mail** | List mailboxes, list and read email messages, and follow email threads (REST v3 — requires the `mail` scope). |
 | **Product Catalog** | List, get, create, and update products and sections. |
 | **Configuration** | Export the full portal config (pipelines, stages, custom fields, automations) to JSON, compare two configs, and apply one config to another portal. |
 | **Raw API** | Call any Bitrix24 REST method directly, including batch requests. |
@@ -202,6 +203,7 @@ Use this when you want Claude to operate as a full Bitrix24 assistant — readin
 | `bizproc` | Business processes and automations |
 | `catalog` | Product catalog |
 | `telephony` | Call history |
+| `mail` | Read mailboxes and email messages (REST v3) |
 
 > Claude will gracefully report when a requested action requires a scope that is not enabled on the webhook, so you can always start with fewer scopes and add more later.
 
@@ -210,7 +212,7 @@ Use this when you want Claude to operate as a full Bitrix24 assistant — readin
 ## Available Tools
 
 <details>
-<summary>Click to expand full tool list (40 tools)</summary>
+<summary>Click to expand full tool list (44 tools)</summary>
 
 ### Connection
 - `b24_test_connection` — Verify the webhook and confirm portal info and user permissions.
@@ -257,6 +259,13 @@ Use this when you want Claude to operate as a full Bitrix24 assistant — readin
 
 ### Telephony
 - `b24_telephony_calls` — Query the call history log.
+
+### Mail (read)
+> Uses the Bitrix24 **REST v3** mail API (served from the `/rest/api/` base path). Requires the **`mail`** scope on the webhook — this is separate from `mailservice` — and a commercial plan.
+- `b24_mail_mailbox_list` — List the webhook user's mailboxes (id, name, email, sender name).
+- `b24_mail_message_list` — List a mailbox's messages, filtered by text, date range, read/unread, attachments, or folder.
+- `b24_mail_message_get` — Get a full message by ID, including its body.
+- `b24_mail_message_thread` — Get the email thread (conversation) for a given message ID.
 
 ### Product Catalog
 - `b24_products_list` — List catalog products.
@@ -306,7 +315,7 @@ Once configured, you can ask Claude things like:
 Claude (Claude Desktop / Claude Code)
         │  MCP protocol (stdio)
         ▼
-   index.js  (MCP server — 40 tools)
+   index.js  (MCP server — 44 tools)
         │
    src/tools/      ← one file per functional area
    src/bitrix24/   ← HTTP client with rate limiting & retry

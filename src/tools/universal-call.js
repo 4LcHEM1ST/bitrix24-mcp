@@ -4,12 +4,12 @@ import { resolveWebhook } from '../utils/resolve-webhook.js';
 
 export const callSchema = z.object({
   method: z.string().describe(
-    'Método REST de Bitrix24. Ejemplos: crm.deal.list, tasks.task.add, disk.folder.getchildren, im.notify.personal.add'
+    'REST-метод Bitrix24. Примеры: crm.deal.list, tasks.task.add, disk.folder.getchildren, im.notify.personal.add'
   ),
   params: z.record(z.any()).optional().default({}).describe(
-    'Parámetros del método como objeto JSON. Ejemplo: { "filter": { "STAGE_ID": "WON" }, "select": ["ID","TITLE"] }'
+    'Параметры метода в виде JSON-объекта. Пример: { "filter": { "STAGE_ID": "WON" }, "select": ["ID","TITLE"] }'
   ),
-  webhook_url: z.string().url().optional().describe('Webhook opcional, usa el default si no se indica'),
+  webhook_url: z.string().url().optional().describe('Опциональный вебхук, используется значение по умолчанию, если не указано'),
 });
 
 export async function universalCall({ method, params = {}, webhook_url }) {
@@ -31,9 +31,9 @@ export const batchSchema = z.object({
     method: z.string(),
     params: z.record(z.any()).optional().default({}),
   })).describe(
-    'Objeto donde cada clave es un alias y el valor es { method, params }. ' +
-    'Los params pueden referenciar resultados previos con $result[alias][campo]. ' +
-    'Ejemplo: { "deals": { "method": "crm.deal.list", "params": { "filter": { "STAGE_ID": "NEW" } } } }'
+    'Объект, где каждый ключ — это алиас, а значение — { method, params }. ' +
+    'Параметры могут ссылаться на предыдущие результаты через $result[alias][поле]. ' +
+    'Пример: { "deals": { "method": "crm.deal.list", "params": { "filter": { "STAGE_ID": "NEW" } } } }'
   ),
   webhook_url: z.string().url().optional(),
 });

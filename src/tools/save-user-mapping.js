@@ -7,14 +7,14 @@ export const saveUserMappingSchema = z.object({
     NAME: z.string().optional(),
     LAST_NAME: z.string().optional(),
     EMAIL: z.string().optional(),
-  })).describe('Lista de usuarios de la instancia origen'),
+  })).describe('Список пользователей исходной инстанции'),
   dest_users: z.array(z.object({
     ID: z.string(),
     NAME: z.string().optional(),
     LAST_NAME: z.string().optional(),
     EMAIL: z.string().optional(),
-  })).describe('Lista de usuarios de la instancia destino'),
-  output_file: z.string().describe('Ruta donde guardar el JSON de mapeo'),
+  })).describe('Список пользователей целевой инстанции'),
+  output_file: z.string().describe('Путь для сохранения JSON сопоставления'),
 });
 
 export async function saveUserMappingTool({ source_users, dest_users, output_file }) {
@@ -34,9 +34,9 @@ export async function saveUserMappingTool({ source_users, dest_users, output_fil
       name: `${u.NAME || ''} ${u.LAST_NAME || ''}`.trim(),
       email: u.EMAIL,
     })),
-    summary: `${Object.keys(mapping).length} usuarios mapeados, ${unmapped.length} sin correspondencia en destino`,
+    summary: `${Object.keys(mapping).length} пользователей сопоставлено, ${unmapped.length} без соответствия в целевой инстанции`,
     note: unmapped.length > 0
-      ? 'Los usuarios sin mapeo deberán asignarse manualmente. Las automatizaciones que los referencien tendrán advertencias al aplicar.'
+      ? 'Пользователей без сопоставления нужно назначить вручную. Автоматизации, которые на них ссылаются, вызовут предупреждения при применении.'
       : null,
   };
 }

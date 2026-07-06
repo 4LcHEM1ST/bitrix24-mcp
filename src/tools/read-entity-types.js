@@ -4,7 +4,7 @@ import { Bitrix24Reader } from '../bitrix24/reader.js';
 import { resolveWebhook } from '../utils/resolve-webhook.js';
 
 export const readEntityTypesSchema = z.object({
-  webhook_url: z.string().url().optional().describe('URL del webhook (opcional si está configurado por defecto)'),
+  webhook_url: z.string().url().optional().describe('URL вебхука (опционально, если настроен по умолчанию)'),
 });
 
 export async function readEntityTypes({ webhook_url }) {
@@ -19,6 +19,6 @@ export async function readEntityTypes({ webhook_url }) {
     spa_types: data.spa,
     statuses_count: data.statuses.length,
     currencies: data.currencies,
-    summary: `${data.standard.length} tipos estándar, ${data.spa.length} SPA personalizados, ${data.currencies.length} monedas`,
+    summary: `${data.standard.length} стандартных типов, ${data.spa.length} пользовательских SPA, ${data.currencies.length} валют`,
   };
 }

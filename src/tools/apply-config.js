@@ -6,9 +6,9 @@ import { applyUserMapping } from '../utils/user-mapping.js';
 import { resolveWebhook } from '../utils/resolve-webhook.js';
 
 export const applyConfigSchema = z.object({
-  config_file: z.string().describe('Ruta al archivo JSON de configuración a aplicar'),
-  webhook_url: z.string().url().optional().describe('Webhook de la instancia destino (opcional si está configurado por defecto)'),
-  user_mapping_file: z.string().optional().describe('Ruta al JSON de mapeo de usuarios (para automatizaciones)'),
+  config_file: z.string().describe('Путь к JSON-файлу конфигурации для применения'),
+  webhook_url: z.string().url().optional().describe('Вебхук целевой инстанции (необязательно, если настроен по умолчанию)'),
+  user_mapping_file: z.string().optional().describe('Путь к JSON сопоставления пользователей (для автоматизаций)'),
 });
 
 export async function applyConfig({ config_file, webhook_url, user_mapping_file }) {
@@ -16,7 +16,7 @@ export async function applyConfig({ config_file, webhook_url, user_mapping_file 
   const client = new Bitrix24Client(resolveWebhook(webhook_url));
   const writer = new Bitrix24Writer(client);
 
-  // Orden de aplicación definido en sección 7.4 del documento
+  // Порядок применения, определённый в разделе 7.4 документа
   if (config.currencies?.length) {
     await writer.applyCurrencies(config.currencies);
   }
@@ -54,6 +54,6 @@ export async function applyConfig({ config_file, webhook_url, user_mapping_file 
       skipped: report.skipped.length,
     },
     details: report,
-    summary: `Aplicación completa: ${report.created.length} creados, ${report.updated.length} actualizados, ${report.failed.length} fallidos, ${report.skipped.length} omitidos`,
+    summary: `Применение завершено: ${report.created.length} создано, ${report.updated.length} обновлено, ${report.failed.length} с ошибками, ${report.skipped.length} пропущено`,
   };
 }
